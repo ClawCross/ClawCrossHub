@@ -1701,8 +1701,16 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
   // Skills and cron helpers
   const skillsInfo = useMemo(() => (workflow?.skills_info as Record<string, Record<string, SkillInfo>> | undefined) ?? {}, [workflow]);
   const cronJobs = useMemo(() => (workflow?.cron_jobs as Record<string, CronJob[]> | undefined) ?? {}, [workflow]);
-  const teamSkills = useMemo(() => skillsInfo._team || skillsInfo._global || null, [skillsInfo]);
-  const teamCronJobs = useMemo(() => cronJobs._team || cronJobs._global || [], [cronJobs]);
+  const teamSkills = useMemo(() => skillsInfo._team || null, [skillsInfo]);
+  const globalSkills = useMemo(() => skillsInfo._global || null, [skillsInfo]);
+  const teamCronJobs = useMemo(() => {
+    if (Array.isArray(cronJobs._team) && cronJobs._team.length > 0) return cronJobs._team;
+    if (Array.isArray(cronJobs._global) && cronJobs._global.length > 0) return cronJobs._global;
+    const merged = Object.entries(cronJobs)
+      .filter(([key, jobs]) => !key.startsWith("_") && Array.isArray(jobs) && jobs.length > 0)
+      .flatMap(([, jobs]) => jobs);
+    return merged;
+  }, [cronJobs]);
 
   function getAgentSkills(agentName: string): Record<string, SkillInfo> | null {
     if (skillsInfo[agentName]) return skillsInfo[agentName];
@@ -1740,7 +1748,12 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
       return [];
     }
 
-    const prefixes = scope === "_team" ? [`skills/${skillName}/`] : [`skills/${scope}/${skillName}/`, `skills/${skillName}/`];
+    const prefixes =
+      scope === "_team"
+        ? [`skills/${skillName}/`, `clawcross_team_skills/${skillName}/`]
+        : scope === "_global"
+          ? [`clawcross_user_skills/${skillName}/`, `skills/${skillName}/`]
+          : [`skills/${scope}/${skillName}/`, `skills/${skillName}/`];
     return Object.entries(rawData)
       .flatMap(([relPath, content]) => {
         if (typeof content !== "string") {
@@ -1764,6 +1777,29 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
     } catch {
       return null;
     }
+  }
+
+  function normalizeCronJob(job: CronJob, fallbackName: string): CronJob {
+    const row = (job ?? {}) as Record<string, unknown>;
+    const fallbackSchedule = typeof row.schedule === "string" ? row.schedule : undefined;
+    const atValue =
+      typeof row.at === "string" || typeof row.at === "number"
+        ? row.at
+        : typeof row.run_at === "string" || typeof row.run_at === "number"
+          ? row.run_at
+          : undefined;
+    return {
+      ...job,
+      name: String(row.name ?? row.task_id ?? fallbackName),
+      enabled: typeof row.enabled === "boolean" ? row.enabled : true,
+      scheduleKind: String(row.scheduleKind ?? row.schedule_type ?? ""),
+      cron: String(row.cron ?? fallbackSchedule ?? ""),
+      at: atValue,
+      every: typeof row.every === "string" ? row.every : undefined,
+      mode: String(row.mode ?? row.target_type ?? ""),
+      session: typeof row.session === "string" ? row.session : undefined,
+      message: String(row.message ?? row.text ?? ""),
+    };
   }
 
   function renderSkillItem(scope: string, skillName: string, skillData: SkillInfo) {
@@ -2138,6 +2174,20 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
           </Card>
         ) : null}
 
+        {globalSkills && Object.keys(globalSkills).length > 0 ? (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>{t("detail.skills")} (Global)</CardTitle>
+              <CardDescription>{Object.keys(globalSkills).length} {t("detail.skills")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="agent-skills-section mt-0">
+                {Object.entries(globalSkills).map(([skillName, skillData]) => renderSkillItem("_global", skillName, skillData))}
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
+
         {teamCronJobs.length > 0 ? (
           <Card className="mt-6">
             <CardHeader>
@@ -2146,7 +2196,9 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
             </CardHeader>
             <CardContent>
               <div className="agent-cron-section mt-0">
-                {teamCronJobs.map((job, jIdx) => (
+                {teamCronJobs.map((rawJob, jIdx) => {
+                  const job = normalizeCronJob(rawJob, t("detail.unnamedJob"));
+                  return (
                   <div key={`team-cron-${jIdx}`} className="agent-cron-item">
                     <div className="flex items-center gap-1.5">
                       <span className="agent-cron-name">{pickCronJobText(workflow?.localizations, "_team", jIdx, "name", String(job.name || t("detail.unnamedJob")), currentLocale)}</span>
@@ -2166,7 +2218,7 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
                       <div className="agent-cron-msg">💬 {pickCronJobText(workflow?.localizations, "_team", jIdx, "message", String(job.message), currentLocale).slice(0, 120)}</div>
                     ) : null}
                   </div>
-                ))}
+                )})}
               </div>
             </CardContent>
           </Card>
@@ -2487,7 +2539,9 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
                               {agent.agentCronJobs && agent.agentCronJobs.length > 0 && (
                                 <div className="agent-cron-section">
                                   <div className="agent-cron-title">{t("detail.cronJobs")} ({agent.agentCronJobs.length})</div>
-                                  {agent.agentCronJobs.map((job, jIdx) => (
+                                  {agent.agentCronJobs.map((rawJob, jIdx) => {
+                                    const job = normalizeCronJob(rawJob, t("detail.unnamedJob"));
+                                    return (
                                     <div key={`cron_${jIdx}`} className="agent-cron-item">
                                       <div className="flex items-center gap-1.5">
                                         <span className="agent-cron-name">{pickCronJobText(workflow?.localizations, agent.name, jIdx, "name", String(job.name || t("detail.unnamedJob")), currentLocale)}</span>
@@ -2507,7 +2561,7 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
                                         <div className="agent-cron-msg">💬 {pickCronJobText(workflow?.localizations, agent.name, jIdx, "message", String(job.message), currentLocale).slice(0, 120)}</div>
                                       )}
                                     </div>
-                                  ))}
+                                  )})}
                                 </div>
                               )}
                             </div>

@@ -78,6 +78,42 @@ function isValidWorkflowYaml(content: string): boolean {
   }
 }
 
+function parseSkillPath(entryName: string): { scope: string; skillName: string } | null {
+  if (entryName.startsWith("clawcross_team_skills/")) {
+    const rel = entryName.slice("clawcross_team_skills/".length);
+    const skillName = rel.split("/")[0];
+    return skillName ? { scope: "_team", skillName } : null;
+  }
+  if (entryName.startsWith("clawcross_user_skills/")) {
+    const rel = entryName.slice("clawcross_user_skills/".length);
+    const skillName = rel.split("/")[0];
+    return skillName ? { scope: "_global", skillName } : null;
+  }
+  if (entryName.startsWith("skills/")) {
+    const parts = entryName.split("/");
+    if (parts.length < 3) {
+      return null;
+    }
+    const reserved = new Set([
+      "SKILL.md",
+      "README.md",
+      "PACKAGE.md",
+      "INSTALLATION.md",
+      "UPLOAD_INSTRUCTIONS.md",
+      "openclaw.skill.json",
+      "clawhub.json",
+      "_meta.json",
+    ]);
+    const usesAgentNamespace =
+      parts.length >= 4 && !reserved.has(parts[2]) && !parts[2].startsWith(".");
+    return {
+      scope: usesAgentNamespace ? parts[1] : "_team",
+      skillName: usesAgentNamespace ? parts[2] : parts[1],
+    };
+  }
+  return null;
+}
+
 /**
  * Merge two Expert arrays, preferring entries from `primary` over `secondary`.
  * De-duplicates by tag (case-insensitive). Primary entries that have a non-empty
@@ -156,19 +192,17 @@ export async function importZipBuffer(buffer: Buffer, options: ImportOptions) {
     const name = entry.entryName;
     const base = path.basename(name);
 
-    if (name.startsWith("skills/")) {
+    if (
+      name.startsWith("skills/") ||
+      name.startsWith("clawcross_user_skills/") ||
+      name.startsWith("clawcross_team_skills/")
+    ) {
       skillsData[name] = entry.getData().toString("base64");
 
-      // Parse skills metadata to build skills_info. Current ClawCross exports
-      // support both skills/<skillName>/... and skills/<agentName>/<skillName>/...
-      const parts = name.split("/");
-      if (parts.length >= 3) {
-        const usesAgentNamespace =
-          parts.length >= 4 &&
-          !["SKILL.md", "README.md", "PACKAGE.md", "INSTALLATION.md", "UPLOAD_INSTRUCTIONS.md", "openclaw.skill.json", "clawhub.json", "_meta.json"].includes(parts[2]) &&
-          !parts[2].startsWith(".");
-        const agentName = usesAgentNamespace ? parts[1] : "_team";
-        const skillName = usesAgentNamespace ? parts[2] : parts[1];
+      const parsedSkillPath = parseSkillPath(name);
+      if (parsedSkillPath) {
+        const agentName = parsedSkillPath.scope;
+        const skillName = parsedSkillPath.skillName;
         if (base === "_meta.json" || base === "origin.json") {
           try {
             const metaContent = JSON.parse(entry.getData().toString("utf-8"));
@@ -196,7 +230,13 @@ export async function importZipBuffer(buffer: Buffer, options: ImportOptions) {
     // Parse cron_jobs.json
     if (base === "cron_jobs.json") {
       const parsed = parseJson(fileText);
-      cronJobs = asCronJobsMap(parsed);
+      const rawCronJobs = asCronJobsMap(parsed);
+      cronJobs = Object.fromEntries(
+        Object.entries(rawCronJobs).map(([key, jobs]) => [
+          key,
+          Array.isArray(jobs) ? jobs.map((job) => normalizeCronJob(job)) : [],
+        ])
+      );
     }
 
     if (base === "internal_agents.json") {
@@ -398,6 +438,30 @@ function sanitizeFileName(value: string): string {
     .slice(0, 40);
 }
 
+function normalizeCronJob(job: CronJob): CronJob {
+  const row = (job ?? {}) as Record<string, unknown>;
+  const scheduleType = String(row.scheduleKind ?? row.schedule_type ?? "").trim();
+  const schedule = row.cron ?? row.schedule;
+  const atValue =
+    typeof row.at === "string" || typeof row.at === "number"
+      ? row.at
+      : typeof row.run_at === "string" || typeof row.run_at === "number"
+        ? row.run_at
+        : undefined;
+  return {
+    ...job,
+    name: String(row.name ?? row.task_id ?? ""),
+    enabled: typeof row.enabled === "boolean" ? row.enabled : true,
+    scheduleKind: scheduleType || undefined,
+    cron: typeof schedule === "string" ? schedule : undefined,
+    at: atValue,
+    every: typeof row.every === "string" ? row.every : undefined,
+    mode: typeof row.mode === "string" ? row.mode : undefined,
+    session: typeof row.session === "string" ? row.session : undefined,
+    message: String(row.message ?? row.text ?? ""),
+  };
+}
+
 export function exportWorkflowZip(workflowId: string): { buffer: Buffer; filename: string } | null {
   const workflow = getWorkflowById(workflowId);
   if (!workflow) {
@@ -499,7 +563,13 @@ export function exportWorkflowZip(workflowId: string): { buffer: Buffer; filenam
 
   // Export cron_jobs.json if available
   if (workflow.cron_jobs && typeof workflow.cron_jobs === "object" && Object.keys(workflow.cron_jobs).length > 0) {
-    zip.addFile("cron_jobs.json", Buffer.from(JSON.stringify(workflow.cron_jobs, null, 2), "utf-8"));
+    const normalizedCron = Object.fromEntries(
+      Object.entries(workflow.cron_jobs).map(([key, jobs]) => [
+        key,
+        Array.isArray(jobs) ? jobs.map((job) => normalizeCronJob(job)) : [],
+      ])
+    );
+    zip.addFile("cron_jobs.json", Buffer.from(JSON.stringify(normalizedCron, null, 2), "utf-8"));
   }
 
   if (workflow.skills_data && typeof workflow.skills_data === "object") {
