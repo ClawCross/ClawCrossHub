@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server";
-import { sitePath } from "@/lib/site-url";
 
 export function resolveGithubRedirectUri(request: NextRequest): string {
   const fromEnv = process.env.GITHUB_REDIRECT_URI?.trim();
@@ -12,5 +11,5 @@ export function resolveGithubRedirectUri(request: NextRequest): string {
   const host = forwardedHost || request.headers.get("host") || request.nextUrl.host;
   const protocol = forwardedProto || request.nextUrl.protocol.replace(":", "") || "http";
 
-  return `${protocol}://${host}${sitePath("/auth/github/callback")}`;
+  return `${protocol}://${host}/auth/github/callback`;
 }

@@ -251,11 +251,10 @@ export function parseYamlPlanSummary(yamlStr: string): Summary {
       const row = step as Record<string, unknown>;
       if (row.selector) {
         stepTypes.push("selector");
-      } else if (typeof (row.agent ?? row.persona ?? row.expert) === "string") {
+      } else if (typeof row.expert === "string") {
         stepTypes.push("expert");
-        const reference = String(row.agent ?? row.persona ?? row.expert);
-        if (shouldTrackAsInternalExpert(reference)) {
-          expertNames.push(parseAgentRaw(reference));
+        if (shouldTrackAsInternalExpert(row.expert)) {
+          expertNames.push(parseAgentRaw(row.expert));
         }
       } else if (Array.isArray(row.parallel)) {
         stepTypes.push("parallel");
@@ -264,9 +263,8 @@ export function parseYamlPlanSummary(yamlStr: string): Summary {
             if (shouldTrackAsInternalExpert(child)) {
               expertNames.push(parseAgentRaw(child));
             }
-          } else if (child && typeof child === "object") {
-            const participant = child as Record<string, unknown>;
-            const expertRaw = String(participant.agent ?? participant.persona ?? participant.expert ?? "");
+          } else if (child && typeof child === "object" && typeof (child as Record<string, unknown>).expert === "string") {
+            const expertRaw = String((child as Record<string, unknown>).expert);
             if (shouldTrackAsInternalExpert(expertRaw)) {
               expertNames.push(parseAgentRaw(expertRaw));
             }
@@ -317,17 +315,17 @@ export function extractExpertsFromYaml(yamlContent: string): { experts: Expert[]
       }
 
       seen.add(tag);
-      const builtin = builtinExperts[tag] || Object.values(builtinExperts).find(expert => expert.name === tag);
+      const builtin = builtinExperts[tag];
       if (builtin) {
         experts.push({
           name: builtin.name,
-          tag: builtin.tag,
+          tag,
           persona: builtin.persona,
           temperature: Number(builtin.temperature ?? 0.7)
         });
         internalAgents.push({
           name: builtin.name,
-          tag: builtin.tag
+          tag
         });
       } else {
         experts.push({
@@ -350,15 +348,14 @@ export function extractExpertsFromYaml(yamlContent: string): { experts: Expert[]
 
       const row = step as Record<string, unknown>;
       if (!row.selector) {
-        processExpert(row.agent ?? row.persona ?? row.expert);
+        processExpert(row.expert);
       }
       if (Array.isArray(row.parallel)) {
         row.parallel.forEach((child) => {
           if (typeof child === "string") {
             processExpert(child);
           } else if (child && typeof child === "object") {
-            const participant=child as Record<string,unknown>;
-            processExpert(participant.agent ?? participant.persona ?? participant.expert);
+            processExpert((child as Record<string, unknown>).expert);
           }
         });
       }

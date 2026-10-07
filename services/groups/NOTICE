@@ -1,7 +1,0 @@
-ClawCross Groups
-
-The group relay persistence, routing protocol, wake-selection helpers and
-browser chat/message-menu assets originate in ClawCross (Apache License 2.0).
-This project adapts them into an independent website and relay. It contains
-no Agent runtime, LLM client, ClawCross gateway, scheduler or workflow engine.
-

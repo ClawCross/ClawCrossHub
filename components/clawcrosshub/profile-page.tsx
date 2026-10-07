@@ -1,7 +1,5 @@
 "use client";
 
-import { siteFetch, sitePath, SITE_ORIGIN } from "@/lib/site-url";
-
 import { ArrowLeft, Edit, ExternalLink, Github, LogOut, Plus, Settings, Star, Trash2, UserRound, X } from "lucide-react";
 
 import { SiteHeader } from "@/components/clawcrosshub/site-header";
@@ -87,7 +85,7 @@ export function ProfilePage({ login }: { login: string }) {
 
   const refreshWorkflows = useCallback(async () => {
     try {
-      const workflowResp = await siteFetch(`/api/user/${encodeURIComponent(login)}/workflows`);
+      const workflowResp = await fetch(`/api/user/${encodeURIComponent(login)}/workflows`);
       if (workflowResp.ok) {
         const data = (await workflowResp.json()) as { workflows: UserWorkflow[] };
         setWorkflows(data.workflows);
@@ -101,7 +99,7 @@ export function ProfilePage({ login }: { login: string }) {
     async function load() {
       setLoading(true);
       try {
-        const authResp = await siteFetch("/api/auth/status");
+        const authResp = await fetch("/api/auth/status");
         const authData = (await authResp.json()) as { logged_in: boolean; user?: GithubUser };
         if (authData.logged_in && authData.user) {
           setCurrentUser(authData.user);
@@ -111,7 +109,7 @@ export function ProfilePage({ login }: { login: string }) {
         await refreshWorkflows();
 
         if (authData.logged_in && authData.user && authData.user.login === login) {
-          const starredResp = await siteFetch(`/api/user/${encodeURIComponent(login)}/stars`);
+          const starredResp = await fetch(`/api/user/${encodeURIComponent(login)}/stars`);
           if (starredResp.ok) {
             const starredData = (await starredResp.json()) as { workflows: UserWorkflow[] };
             setStarredWorkflows(starredData.workflows);
@@ -133,7 +131,7 @@ export function ProfilePage({ login }: { login: string }) {
     if (!formData.yaml_content.trim()) { setFormError(t("crud.yamlRequired")); return; }
     setFormBusy(true);
     try {
-      const resp = await siteFetch("/api/workflows/publish", {
+      const resp = await fetch("/api/workflows/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -173,7 +171,7 @@ export function ProfilePage({ login }: { login: string }) {
       if (formData.yaml_content.trim()) {
         body.yaml_content = formData.yaml_content.trim();
       }
-      const resp = await siteFetch(`/api/workflows/${encodeURIComponent(editingWorkflow.id)}/edit`, {
+      const resp = await fetch(`/api/workflows/${encodeURIComponent(editingWorkflow.id)}/edit`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -195,7 +193,7 @@ export function ProfilePage({ login }: { login: string }) {
     if (!deletingWorkflow) return;
     setFormBusy(true);
     try {
-      const resp = await siteFetch(`/api/workflows/${encodeURIComponent(deletingWorkflow.id)}/manage`, {
+      const resp = await fetch(`/api/workflows/${encodeURIComponent(deletingWorkflow.id)}/manage`, {
         method: "DELETE",
       });
       const data = (await resp.json()) as { status?: string; error?: string };
@@ -274,7 +272,7 @@ export function ProfilePage({ login }: { login: string }) {
             {currentUser.name || currentUser.login}
           </Button>
         ) : (
-          <a href={sitePath("/auth/github")}  className={buttonVariants({ variant: "outline" })}>
+          <a href="/auth/github" className={buttonVariants({ variant: "outline" })}>
             <Github className="h-4 w-4" />
             <StableI18nText translationKey="header.signIn" />
           </a>
@@ -535,7 +533,7 @@ export function ProfilePage({ login }: { login: string }) {
                     </Select>
                   </div>
                   <div className="border-t pt-4">
-                    <a href={sitePath("/auth/logout")}  className={buttonVariants({ variant: "destructive", size: "sm" })}>
+                    <a href="/auth/logout" className={buttonVariants({ variant: "destructive", size: "sm" })}>
                       <LogOut className="h-4 w-4" />
                       {t("profile.signOut")}
                     </a>

@@ -1,27 +1,38 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import os from "node:os";
 
 import { PRESET_WORKFLOW_LOCALIZATIONS } from "@/lib/preset-localizations";
 import type { Agent, CronJob, Expert, SkillInfo, Workflow } from "@/lib/types";
-import PRESET_PERSONAS from "@/data/preset-personas.json";
 
 export const CLAWCROSSHUB_PORT = 51211;
 const IS_VERCEL = process.env.VERCEL === "1";
 const PROJECT_ROOT = process.cwd();
 export const WORKSPACE_ROOT = IS_VERCEL ? PROJECT_ROOT : path.resolve(/* turbopackIgnore: true */ PROJECT_ROOT, "..");
+const CLAWCROSS_ROOT = path.resolve(/* turbopackIgnore: true */ PROJECT_ROOT, "..", "ClawCross");
+const CLAWCROSS_ROOT_ALT = path.resolve(/* turbopackIgnore: true */ PROJECT_ROOT, "..", "clawcross");
 const VERCEL_DATA_ROOT = "/tmp/clawcrosshub";
-const HUB_DATA_ROOT = IS_VERCEL ? VERCEL_DATA_ROOT : path.resolve(process.env.CLAWCROSSHUB_DATA_DIR || path.join(os.homedir(), ".clawcross-hub"));
-export const HUB_META_PATH = path.join(HUB_DATA_ROOT, "hub_meta.json");
-export const STAR_RECORDS_PATH = path.join(HUB_DATA_ROOT, "star_records.json");
+export const HUB_META_PATH = IS_VERCEL ? path.join(VERCEL_DATA_ROOT, "hub_meta.json") : path.join(PROJECT_ROOT, "hub_meta.json");
+export const STAR_RECORDS_PATH = IS_VERCEL ? path.join(VERCEL_DATA_ROOT, "star_records.json") : path.join(PROJECT_ROOT, "star_records.json");
 
 function resolveSharedPath(...segments: string[]): string {
-  return path.join(process.env.CLAWCROSSHUB_PRESETS_ROOT || PROJECT_ROOT, ...segments);
+  const primary = path.join(WORKSPACE_ROOT, ...segments);
+  if (fs.existsSync(primary)) {
+    return primary;
+  }
+
+  for (const base of [CLAWCROSS_ROOT, CLAWCROSS_ROOT_ALT]) {
+    const candidate = path.join(base, ...segments);
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return primary;
 }
 
-export const USER_FILES_ROOT = path.resolve(process.env.CLAWCROSSHUB_USER_FILES_ROOT || path.join(HUB_DATA_ROOT, "user_files"));
-export const PROMPTS_EXPERTS_PATH = path.resolve(process.env.CLAWCROSSHUB_EXPERTS_PATH || path.join(HUB_DATA_ROOT, "prompts", "oasis_experts.json"));
+export const USER_FILES_ROOT = resolveSharedPath("data", "user_files");
+export const PROMPTS_EXPERTS_PATH = resolveSharedPath("data", "prompts", "oasis_experts.json");
 
 export const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID ?? "";
 export const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET ?? "";
@@ -246,7 +257,7 @@ function buildLocalSnapshotWorkflow(options: {
     id: options.id,
     title: options.title,
     description: options.description,
-    author: options.author ?? "ClawCross Team",
+    author: options.author ?? "ClawCrossHub Team",
     tags: options.tags,
     category: options.category,
     stars: 0,
@@ -269,40 +280,30 @@ function buildLocalSnapshotWorkflow(options: {
   };
 }
 
-const PRESET_ROLE_NAMES: Record<string,string> = {"data": "Data Analyst", "critical": "Critical Reviewer", "creative": "Creative Coder", "synthesis": "Synthesis Advisor", "entrepreneur": "Entrepreneur", "common_person": "General User", "economist": "Economist", "lawyer": "Legal Advisor", "cost_controller": "Cost Analyst", "revenue_planner": "Revenue Planner"};
-
-function presetAgent(tag: string): Agent {
-  const persona = PRESET_PERSONAS.find(row => row.tag === tag);
-  if (!persona) throw new Error(`Missing preset persona: ${tag}`);
-  return {name:PRESET_ROLE_NAMES[tag] || persona.name,tag,persona:persona.persona,
-    tools:[],...(tag === "synthesis" ? {is_primary:true} : {})};
-}
-
 export const PRESET_WORKFLOW_DEFINITIONS: Array<Workflow | null> = [
   {
     id: "ml_code_test",
     title: "ML Code Testing Pipeline",
     description:
       "Automated machine learning code testing workflow with parallel agents analyzing why this pipeline is optimal for ML testing scenarios.",
-author: "ClawCross Team",
+author: "ClawCrossHub Team",
     tags: ["ml", "code", "pipeline"],
     category: "Engineering",
     stars: 128,
     forks: 34,
     icon: "🤖",
-    internal_agents: [presetAgent("data"), presetAgent("critical"), presetAgent("creative"), presetAgent("synthesis")],
     yaml_content: `# ML Code Testing Pipeline
 version: 2
 repeat: false
 plan:
 - id: on1
-  agent: Data Analyst
+  expert: data#temp#1
 - id: on2
-  agent: Critical Reviewer
+  expert: critical#temp#1
 - id: on3
-  agent: Creative Coder
+  expert: creative#temp#1
 - id: on4
-  agent: Synthesis Advisor
+  expert: synthesis#temp#1
 edges:
 - - on1
   - on3
@@ -318,27 +319,26 @@ edges:
     id: "brainstorm_trio",
     title: "Creative Brainstorm Trio",
     description: "Three perspectives brainstorm in parallel, one reviewer filters the ideas, and a synthesis advisor produces a clear recommendation.",
-author: "ClawCross Team",
+author: "ClawCrossHub Team",
     tags: ["brainstorm", "creative", "ideation"],
     category: "Ideation",
     stars: 96,
     forks: 22,
     icon: "💡",
-    internal_agents: [presetAgent("creative"), presetAgent("entrepreneur"), presetAgent("common_person"), presetAgent("critical"), presetAgent("synthesis")],
     yaml_content: `# Creative Brainstorm Trio
 version: 2
 repeat: true
 plan:
 - id: on1
-  agent: Creative Coder
+  expert: creative#temp#1
 - id: on2
-  agent: Entrepreneur
+  expert: entrepreneur#temp#1
 - id: on3
-  agent: General User
+  expert: common_person#temp#1
 - id: on4
-  agent: Critical Reviewer
+  expert: critical#temp#0.7
 - id: on5
-  agent: Synthesis Advisor
+  expert: synthesis#temp#1
 edges:
 - - on1
   - on4
@@ -356,23 +356,22 @@ edges:
     id: "code_review_pipeline",
     title: "Code Review Pipeline",
     description: "Bug and performance review happen in parallel, then a synthesis advisor combines them into one prioritized code review report.",
-author: "ClawCross Team",
+author: "ClawCrossHub Team",
     tags: ["code", "review", "pipeline"],
     category: "Engineering",
     stars: 203,
     forks: 67,
     icon: "💻",
-    internal_agents: [presetAgent("critical"), presetAgent("data"), presetAgent("synthesis")],
     yaml_content: `# Code Review Pipeline
 version: 2
 repeat: false
 plan:
 - id: on1
-  agent: Critical Reviewer
+  expert: critical#temp#1
 - id: on2
-  agent: Data Analyst
+  expert: data#temp#1
 - id: on3
-  agent: Synthesis Advisor
+  expert: synthesis#temp#1
 edges:
 - - on1
   - on3
@@ -386,27 +385,26 @@ edges:
     id: "business_debate",
     title: "Business Strategy Debate",
     description: "Economist, lawyer, and entrepreneur debate business strategy from different angles.",
-author: "ClawCross Team",
+author: "ClawCrossHub Team",
     tags: ["debate", "brainstorm"],
     category: "Business",
     stars: 75,
     forks: 18,
     icon: "🎙️",
-    internal_agents: [presetAgent("economist"), presetAgent("lawyer"), presetAgent("entrepreneur"), presetAgent("cost_controller"), presetAgent("revenue_planner")],
     yaml_content: `# Business Strategy Debate
 version: 2
 repeat: true
 plan:
 - id: on1
-  agent: Economist
+  expert: economist#temp#1
 - id: on2
-  agent: Legal Advisor
+  expert: lawyer#temp#1
 - id: on3
-  agent: Entrepreneur
+  expert: entrepreneur#temp#1
 - id: on4
-  agent: Cost Analyst
+  expert: cost_controller#temp#1
 - id: on5
-  agent: Revenue Planner
+  expert: revenue_planner#temp#1
 - id: on6
   manual:
     author: 主持人
@@ -430,27 +428,26 @@ edges:
     id: "dag_research_pipeline",
     title: "Research Analysis DAG",
     description: "DAG-based research pipeline with parallel data collection and sequential analysis.",
-author: "ClawCross Team",
+author: "ClawCrossHub Team",
     tags: ["pipeline", "data"],
     category: "Research",
     stars: 64,
     forks: 15,
     icon: "📊",
-    internal_agents: [presetAgent("data"), presetAgent("economist"), presetAgent("critical"), presetAgent("synthesis"), presetAgent("creative")],
     yaml_content: `# Research Analysis DAG
 version: 2
 repeat: false
 plan:
 - id: on1
-  agent: Data Analyst
+  expert: data#temp#1
 - id: on2
-  agent: Economist
+  expert: economist#temp#1
 - id: on3
-  agent: Critical Reviewer
+  expert: critical#temp#1
 - id: on4
-  agent: Synthesis Advisor
+  expert: synthesis#temp#1
 - id: on5
-  agent: Creative Coder
+  expert: creative#temp#1
 edges:
 - - on1
   - on3
@@ -467,66 +464,184 @@ edges:
   {
     id: "multi_agent_team",
     title: "Release Readiness Team",
-    description: "A release Team with WeBot reviewers, a Codex implementer, and a Claude documentation agent.",
-    author: "ClawCross Team",
-    tags: ["team", "snapshot", "codex", "claude", "release"],
-    category: "Engineering", stars: 156, forks: 42, icon: "🌐",
-    yaml_content: `version: 2
+    description: "An end-to-end release workflow that combines internal experts, OpenClaw builders, and connected agents for validation and rollout.",
+author: "ClawCrossHub Team",
+    tags: ["team", "snapshot", "openclaw", "release", "delivery"],
+    category: "Engineering",
+    stars: 156,
+    forks: 42,
+    icon: "🌐",
+    yaml_content: `# Release Readiness Team
+version: 2
 repeat: false
 plan:
-- id: research
-  agent: Data Analyst
-  instruction: Analyze the supplied release context and evidence.
-- id: review
-  agent: Critical Reviewer
-  instruction: Identify concrete defects and release risks in the supplied context.
-- id: implement
-  agent: CodePilot
-  instruction: Implement the agreed candidate in the configured workspace; report
-    what changed.
-- id: document
-  agent: DocWriter
-  instruction: Prepare release notes and operator documentation from the implementation
-    report.
-- id: verify
-  agent: Health Reviewer
-  instruction: Review supplied test and service-health results. State missing evidence
-    explicitly.
-- id: summarize
-  agent: Synthesis Advisor
-  instruction: Combine implementation, documentation and validation into a release
-    decision.
-- id: handoff
-  agent: Release Coordinator
-  instruction: Produce the final handoff and checklist. Do not claim external notifications
-    were sent.
+- id: on1
+  expert: data#temp#0.8
+- id: on2
+  expert: critical#temp#0.6
+- id: on3
+  expert: openclaw#ext#CodePilot
+  instruction: Implement the agreed release candidate based on the research and review findings.
+- id: on4
+  expert: openclaw#ext#DocWriter
+  instruction: Write release notes and operator-facing documentation for the current build.
+- id: on5
+  expert: external#service#MonitorBot
+  instruction: Validate service health and watch for anomalies during release verification.
+- id: on6
+  expert: synthesis#temp#0.7
+- id: on7
+  expert: external#service#SlackNotifier
+  instruction: Send the release summary to the team after the package is ready.
 edges:
-- - research
-  - implement
-- - review
-  - implement
-- - implement
-  - document
-- - implement
-  - verify
-- - document
-  - summarize
-- - verify
-  - summarize
-- - summarize
-  - handoff
-- - handoff
-  - __end__
+- - on1
+  - on3
+- - on2
+  - on3
+- - on3
+  - on4
+- - on3
+  - on5
+- - on4
+  - on6
+- - on5
+  - on6
+- - on6
+  - on7
 `,
-    detail: "Import creates the Team and its members. WeBot members use your configured model. Running CodePilot and DocWriter requires an explicitly installed acpx plus working Codex and Claude connections on your device. This sample contains no placeholder HTTP services, Slack webhooks, fabricated skill files or automatic alarms.",
-    internal_agents: [presetAgent("data"), presetAgent("critical"), presetAgent("synthesis"),
-      {name:"Health Reviewer",tag:"health_review",persona:"Review supplied test results and operational evidence. Distinguish verified facts from missing evidence. Do not invent external monitoring connections.",tools:[]},
-      {name:"Release Coordinator",tag:"release_coordinator",persona:"Prepare a concrete release handoff from the Team results. Identify remaining work and never claim that notifications were delivered without evidence.",tools:[]}],
+    detail:
+      "A more purposeful showcase of mixed agent types: internal experts gather evidence and review risks, OpenClaw agents implement and document the release candidate, a connected monitoring agent validates runtime health, and a notification agent closes the loop with rollout communication.",
+    experts_detail: [
+      { name: "Data Analyst", tag: "data", persona: "You are a meticulous data analyst who excels at gathering, cleaning, and interpreting complex datasets.", temperature: 0.8 },
+      { name: "Critical Reviewer", tag: "critical", persona: "You are a sharp-eyed code reviewer who identifies bugs, security vulnerabilities, and performance bottlenecks.", temperature: 0.6 },
+      { name: "Creative Coder", tag: "creative", persona: "You are an innovative software engineer who writes elegant, well-documented code with creative solutions.", temperature: 0.9 },
+      { name: "Synthesis Advisor", tag: "synthesis", persona: "You are a strategic advisor who synthesizes multiple perspectives into actionable recommendations.", temperature: 0.7 }
+    ],
+    internal_agents: [
+      { name: "Data Analyst", tag: "data", persona: "You are a meticulous data analyst who excels at gathering, cleaning, and interpreting complex datasets.", temperature: 0.8 },
+      { name: "Critical Reviewer", tag: "critical", persona: "You are a sharp-eyed code reviewer who identifies bugs, security vulnerabilities, and performance bottlenecks.", temperature: 0.6 },
+      { name: "Creative Coder", tag: "creative", persona: "You are an innovative software engineer who writes elegant, well-documented code with creative solutions.", temperature: 0.9 },
+      { name: "Synthesis Advisor", tag: "synthesis", persona: "You are a strategic advisor who synthesizes multiple perspectives into actionable recommendations.", temperature: 0.7 }
+    ],
     external_agents: [
-      {name:"CodePilot",platform:"codex",persona:"Implement the approved release work and verify the changes in your configured workspace.",meta:{acp:{clawcross_tools:true}}},
-      {name:"DocWriter",platform:"claude",persona:"Prepare clear release notes, operating instructions and limitations from the supplied Team results.",meta:{acp:{clawcross_tools:true}}}
-    ]
-  },
+      {
+        name: "CodePilot",
+        tag: "openclaw",
+        workspace_files: {
+          "IDENTITY.md": "# CodePilot\nAn advanced coding assistant powered by OpenClaw.\nSpecializes in full-stack development, code review, and automated testing.\nCapable of understanding complex codebases and generating production-ready code."
+        },
+        config: {
+          skills: ["code_generation", "test_writing", "refactoring"],
+          workspace_files: { "IDENTITY.md": "CodePilot identity" }
+        }
+      },
+      {
+        name: "DocWriter",
+        tag: "openclaw",
+        workspace_files: {
+          "IDENTITY.md": "# DocWriter\nA documentation specialist agent.\nCreates comprehensive API docs, user guides, and technical specifications.\nSupports Markdown, OpenAPI, and JSDoc formats."
+        },
+        config: {
+          skills: ["markdown_gen", "api_docs", "changelog"],
+          workspace_files: { "IDENTITY.md": "DocWriter identity" }
+        }
+      },
+      {
+        name: "MonitorBot",
+        tag: "external",
+        config: {
+          endpoint: "https://api.monitor-service.io/v1",
+          auth_type: "bearer_token"
+        }
+      },
+      {
+        name: "SlackNotifier",
+        tag: "external",
+        config: {
+          webhook_url: "https://hooks.slack.com/services/EXAMPLE",
+          channel: "#team-alerts"
+        }
+      }
+    ],
+    skills_info: {
+      CodePilot: {
+        code_generation: {
+          files: ["generate.py", "templates/"],
+          meta: { ownerId: "openclaw", slug: "code-generation", version: "2.1.0", publishedAt: 1710000000 },
+          origin: { version: 3, registry: "openclaw-hub", slug: "code-generation", installedVersion: "2.1.0", installedAt: 1710500000 }
+        },
+        test_writing: {
+          files: ["test_gen.py"],
+          meta: { ownerId: "openclaw", slug: "test-writing", version: "1.3.0", publishedAt: 1709000000 },
+          origin: { version: 2, registry: "openclaw-hub", slug: "test-writing", installedVersion: "1.3.0", installedAt: 1710200000 }
+        },
+        refactoring: {
+          files: ["refactor.py", "patterns.json"],
+          meta: { ownerId: "openclaw", slug: "refactoring", version: "1.0.5", publishedAt: 1708000000 },
+          origin: { version: 1, registry: "openclaw-hub", slug: "refactoring", installedVersion: "1.0.5", installedAt: 1710100000 }
+        }
+      },
+      DocWriter: {
+        markdown_gen: {
+          files: ["md_writer.py"],
+          meta: { ownerId: "openclaw", slug: "markdown-gen", version: "1.2.0", publishedAt: 1709500000 },
+          origin: { version: 2, registry: "openclaw-hub", slug: "markdown-gen", installedVersion: "1.2.0", installedAt: 1710300000 }
+        },
+        api_docs: {
+          files: ["openapi_gen.py", "templates/swagger.yaml"],
+          meta: { ownerId: "openclaw", slug: "api-docs", version: "3.0.1", publishedAt: 1710100000 },
+          origin: { version: 4, registry: "openclaw-hub", slug: "api-docs", installedVersion: "3.0.1", installedAt: 1710600000 }
+        },
+        changelog: {
+          files: ["changelog_gen.py"],
+          meta: { ownerId: "openclaw", slug: "changelog", version: "1.0.0", publishedAt: 1708500000 },
+          origin: { version: 1, registry: "openclaw-hub", slug: "changelog", installedVersion: "1.0.0", installedAt: 1710000000 }
+        }
+      }
+    },
+    cron_jobs: {
+      MonitorBot: [
+        {
+          name: "Health Check",
+          enabled: true,
+          scheduleKind: "interval",
+          every: "5m",
+          mode: "silent",
+          session: "monitor_health",
+          message: "Run health check on all monitored services and report anomalies."
+        },
+        {
+          name: "Daily Report",
+          enabled: true,
+          scheduleKind: "cron",
+          cron: "0 9 * * *",
+          mode: "notify",
+          session: "monitor_daily",
+          message: "Generate daily monitoring summary report with uptime statistics."
+        }
+      ],
+      SlackNotifier: [
+        {
+          name: "Weekly Digest",
+          enabled: true,
+          scheduleKind: "cron",
+          cron: "0 10 * * 1",
+          mode: "broadcast",
+          session: "slack_weekly",
+          message: "Compile and send weekly team digest to #team-alerts channel."
+        },
+        {
+          name: "Sprint Reminder",
+          enabled: false,
+          scheduleKind: "cron",
+          cron: "0 9 * * 5",
+          mode: "notify",
+          session: "slack_sprint",
+          message: "Remind team about sprint review meeting."
+        }
+      ]
+    }
+  } as unknown as Workflow,
   buildLocalSnapshotWorkflow({
     id: "dataloop2_selector_team",
     title: "Dataloop2 Selector Team",
@@ -566,11 +681,7 @@ edges:
 
 export const PRESET_WORKFLOWS: Workflow[] = PRESET_WORKFLOW_DEFINITIONS.filter((workflow): workflow is Workflow => Boolean(workflow)).map((workflow) => ({
   ...workflow,
-  localizations: workflow.id === "multi_agent_team" ? {
-    title:{en:workflow.title,zh:"发布就绪团队"},
-    description:{en:workflow.description,zh:"由 WeBot 审核成员、Codex 开发成员和 Claude 文档成员协作的发布团队。"},
-    detail:{en:workflow.detail,zh:"导入后创建团队及全部成员。WeBot 使用本机已配置的模型；运行 Codex 和 Claude 成员需要用户明确安装 acpx 并配置相应连接。本案例不包含虚构 HTTP 服务、Slack webhook、缺失的技能文件或自动闹钟。"}
-  } : PRESET_WORKFLOW_LOCALIZATIONS[workflow.id] ?? workflow.localizations
+  localizations: PRESET_WORKFLOW_LOCALIZATIONS[workflow.id] ?? workflow.localizations
 }));
 
 let builtinExpertsCache: Record<string, Expert> | null = null;
@@ -580,7 +691,7 @@ export function getBuiltinExperts(): Record<string, Expert> {
     return builtinExpertsCache;
   }
 
-  const experts: Record<string, Expert> = Object.fromEntries(PRESET_PERSONAS.map(row => [row.tag,{name:PRESET_ROLE_NAMES[row.tag] || row.name,tag:row.tag,persona:row.persona,temperature:row.temperature ?? 0.7}]));
+  const experts: Record<string, Expert> = {};
   try {
     if (fs.existsSync(PROMPTS_EXPERTS_PATH)) {
       const raw = fs.readFileSync(PROMPTS_EXPERTS_PATH, "utf-8");

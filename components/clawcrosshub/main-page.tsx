@@ -1,7 +1,5 @@
 "use client";
 
-import { siteFetch, sitePath, SITE_ORIGIN } from "@/lib/site-url";
-
 import { Github, LogOut, Search, Settings, Sparkles, Upload, UserRound } from "lucide-react";
 
 import Link from "next/link";
@@ -173,7 +171,7 @@ export function MainPage() {
 
   async function checkAuth() {
     try {
-      const response = await siteFetch("/api/auth/status");
+      const response = await fetch("/api/auth/status");
       if (!response.ok) {
         throw new Error(`auth status ${response.status}`);
       }
@@ -193,7 +191,7 @@ export function MainPage() {
 
   async function loadCategories() {
     try {
-      const response = await siteFetch("/api/categories");
+      const response = await fetch("/api/categories");
       if (!response.ok) {
         throw new Error(`categories ${response.status}`);
       }
@@ -209,14 +207,14 @@ export function MainPage() {
     setLoadError("");
 
     try {
-      const url = new URL(sitePath("/api/workflows"), window.location.origin);
+      const url = new URL("/api/workflows", window.location.origin);
       url.searchParams.set("search", search);
       url.searchParams.set("category", category);
       if (activeTag) {
         url.searchParams.set("tag", activeTag);
       }
 
-      const response = await siteFetch(url.toString());
+      const response = await fetch(url.toString());
       if (!response.ok) {
         throw new Error(`workflows ${response.status}`);
       }
@@ -311,13 +309,13 @@ export function MainPage() {
   }
 
   function buildDownloadCommand(workflow: Workflow): string {
-    const origin = typeof window !== "undefined" ? window.location.origin : SITE_ORIGIN;
-    return `curl -L -o "${buildSnapshotFileName(workflow.title || "workflow")}" "${origin}${sitePath(`/api/workflows/${workflow.id}/download`)}"`;
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://clawcross.net";
+    return `curl -L -o "${buildSnapshotFileName(workflow.title || "workflow")}" "${origin}/api/workflows/${workflow.id}/download"`;
   }
 
   function buildClawCrossImportUrl(workflow: Workflow): string {
-    const fallback = typeof window !== "undefined" ? window.location.origin : SITE_ORIGIN;
-    const downloadUrl = `${fallback}${sitePath(`/api/workflows/${workflow.id}/download`)}`;
+    const fallback = typeof window !== "undefined" ? window.location.origin : "https://clawcross.net";
+    const downloadUrl = `${fallback}/api/workflows/${workflow.id}/download`;
     const target = new URL(clawcrossReturnUrl || fallback);
     target.searchParams.set("hub_download_url", downloadUrl);
     target.searchParams.set("team_name", workflow.id);
@@ -338,7 +336,7 @@ export function MainPage() {
     if (!clawcrossReturnUrl) return;
     const payload = {
       type: "clawcross_hub_import",
-      hub_download_url: `${typeof window !== "undefined" ? window.location.origin : SITE_ORIGIN}${sitePath(`/api/workflows/${workflow.id}/download`)}`,
+      hub_download_url: `${typeof window !== "undefined" ? window.location.origin : "https://clawcross.net"}/api/workflows/${workflow.id}/download`,
       team_name: workflow.id
     };
     if (typeof window !== "undefined" && window.opener && clawcrossReturnOrigin) {
@@ -398,7 +396,7 @@ export function MainPage() {
       }
 
       try {
-        const response = await siteFetch("/api/import/zip", {
+        const response = await fetch("/api/import/zip", {
           method: "POST",
           body: formData
         });
@@ -449,7 +447,7 @@ export function MainPage() {
     }
 
     try {
-      const response = await siteFetch("/api/workflows/publish", {
+      const response = await fetch("/api/workflows/publish", {
         method: "POST",
         headers: {
           "content-type": "application/json"
@@ -529,7 +527,7 @@ export function MainPage() {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <a href={sitePath("/auth/logout")} >
+                <a href="/auth/logout">
                   <LogOut className="mr-2 h-4 w-4" />
                   {t("header.logout")}
                 </a>
@@ -537,7 +535,7 @@ export function MainPage() {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <a href={sitePath("/auth/github")}  className={buttonVariants({ variant: "outline" })}>
+          <a href="/auth/github" className={buttonVariants({ variant: "outline" })}>
             <Github className="h-4 w-4" />
             <StableI18nText translationKey="header.signIn" />
           </a>
@@ -795,7 +793,7 @@ export function MainPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <a href={sitePath("/auth/github")}  className={buttonVariants({ variant: "default" })}>
+            <a href="/auth/github" className={buttonVariants({ variant: "default" })}>
               <Github className="h-4 w-4" />
               {t("login.signInGithub")}
             </a>

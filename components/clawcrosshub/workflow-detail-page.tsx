@@ -1,7 +1,5 @@
 "use client";
 
-import { siteFetch, sitePath, SITE_ORIGIN } from "@/lib/site-url";
-
 import type { ReactNode } from "react";
 import { ArrowLeft, Bot, Brain, Copy, Download, FileText, Github, GitBranch, LogOut, Star, UserCog, UserRound, Wrench } from "lucide-react";
 import yaml from "js-yaml";
@@ -370,7 +368,7 @@ function parseYamlToFlowNodes(
               };
             }
             const childRow = asRecord(item);
-            const childExpert = childRow ? normalizeRef(childRow.agent ?? childRow.persona ?? childRow.expert) : "";
+            const childExpert = childRow ? normalizeRef(childRow.expert) : "";
             if (!childExpert) {
               return null;
             }
@@ -430,7 +428,7 @@ function parseYamlToFlowNodes(
         tooltipTitle = author || displayName || labels.manual;
         tooltipDescription = content;
       } else {
-        const expertRaw = normalizeRef(step.agent ?? step.persona ?? step.expert);
+        const expertRaw = normalizeRef(step.expert);
         if (expertRaw) {
           const info = parseAgent(expertRaw);
           type = step.selector === true ? "selector" : isExternalAgentReference(expertRaw) ? "external" : "expert";
@@ -1260,7 +1258,7 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
 
   async function checkAuth() {
     try {
-      const response = await siteFetch("/api/auth/status");
+      const response = await fetch("/api/auth/status");
       const data = (await response.json()) as { logged_in: boolean; user?: GithubUser };
       if (data.logged_in && data.user) {
         setUser(data.user);
@@ -1275,7 +1273,7 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
   async function fetchWorkflow() {
     setLoading(true);
     try {
-      const workflowResp = await siteFetch(`/api/workflows/${workflowId}`);
+      const workflowResp = await fetch(`/api/workflows/${workflowId}`);
       if (!workflowResp.ok) {
         setWorkflow(null);
         setEngineLayoutRaw(null);
@@ -1286,7 +1284,7 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
       setWorkflow(data);
 
       try {
-        const layoutResp = await siteFetch(`/api/workflows/${workflowId}/layout`);
+        const layoutResp = await fetch(`/api/workflows/${workflowId}/layout`);
         if (layoutResp.ok) {
           const layoutData = await layoutResp.json();
           setEngineLayoutRaw(layoutData);
@@ -1303,7 +1301,7 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
 
   async function checkStarStatus() {
     try {
-      const resp = await siteFetch(`/api/workflows/${workflowId}/star`);
+      const resp = await fetch(`/api/workflows/${workflowId}/star`);
       if (resp.ok) {
         const data = (await resp.json()) as { starred: boolean };
         setStarred(data.starred);
@@ -1319,7 +1317,7 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
       return;
     }
     try {
-      const resp = await siteFetch(`/api/workflows/${workflowId}/star`, {
+      const resp = await fetch(`/api/workflows/${workflowId}/star`, {
         method: "POST"
       });
       if (resp.status === 401) {
@@ -1375,7 +1373,7 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
   }
 
   function downloadZip() {
-    window.location.href = sitePath(`/api/workflows/${workflowId}/download`);
+    window.location.href = `/api/workflows/${workflowId}/download`;
   }
 
   function importToClawcross() {
@@ -1914,7 +1912,7 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
       const identity = getExternalAgentPersona(entry);
       const skills = ((entry.config as Record<string, unknown>)?.skills as string[])?.join(", ") || "";
       const agent: ClassifiedAgent = {
-        name: aName, tag: String(entry.platform || entry.tag || (isOC ? "openclaw" : "external")),
+        name: aName, tag: String(entry.tag || (isOC ? "openclaw" : "external")),
         emoji: isOC ? "🐾" : "🔗", persona: identity, skills, stages: [],
         config: entry.config as Record<string, unknown>, sourceType: isOC ? "openclaw" : "external",
         localizationScopes: ["external_agents"],
@@ -1937,7 +1935,7 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
 
     return { oasis: oasisAgents, openclaw: openclawAgents, external: externalAgentsList, custom: customAgentsList };
   }, [workflow, internalAgents, externalAgents]);
-  const curlDownloadUrl = `${siteOrigin || SITE_ORIGIN}${sitePath(`/api/workflows/${workflowId}/download`)}`;
+  const curlDownloadUrl = `${siteOrigin || "https://clawcross.net"}/api/workflows/${workflowId}/download`;
   const curlDownloadCommand = `curl -L -o "${buildSnapshotFileName(workflow?.title || "workflow")}" "${curlDownloadUrl}"`;
   const localizeWorkflowText = useCallback(
     (field: "title" | "description" | "detail" | "category", fallback: string): string => {
@@ -2024,7 +2022,7 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
               ) : null}
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <a href={sitePath("/auth/logout")} >
+                <a href="/auth/logout">
                   <LogOut className="mr-2 h-4 w-4" />
                   {t("header.logout")}
                 </a>
@@ -2032,7 +2030,7 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <a href={sitePath("/auth/github")}  className={buttonVariants({ variant: "outline" })}>
+          <a href="/auth/github" className={buttonVariants({ variant: "outline" })}>
             <Github className="h-4 w-4" />
             <StableI18nText translationKey="header.signIn" />
           </a>
@@ -2677,7 +2675,7 @@ export function WorkflowDetailPage({ workflowId }: { workflowId: string }) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <a href={sitePath("/auth/github")}  className={buttonVariants({ variant: "default" })}>
+            <a href="/auth/github" className={buttonVariants({ variant: "default" })}>
               <Github className="h-4 w-4" />
               {t("login.signInGithub")}
             </a>

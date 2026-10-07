@@ -1,4 +1,3 @@
-import { sitePath } from "@/lib/site-url";
 import { NextRequest, NextResponse } from "next/server";
 
 import { ensureHubMetaHydrated, listWorkflows } from "@/lib/workflow-store";
@@ -43,18 +42,18 @@ export async function GET(request: NextRequest) {
     source: w.source ?? "unknown",
     steps: w.steps ?? 0,
     published_at: w.published_at ?? null,
-    download_url: sitePath(`/api/workflows/${w.id}/download`),
+    download_url: `/api/workflows/${w.id}/download`,
   }));
 
   const accept = request.headers.get("accept") ?? "";
 
   // ── Plain text mode (for terminal / curl) ──
   if (accept.includes("text/plain")) {
-    const origin = request.nextUrl.origin + sitePath("");
+    const origin = request.nextUrl.origin;
     const lines: string[] = [];
 
     lines.push("=".repeat(80));
-    lines.push("  ClawCross — Workflow Catalog");
+    lines.push("  ClawCrossHub — Workflow Catalog");
     lines.push("=".repeat(80));
     lines.push("");
     lines.push(`  Total: ${items.length} workflow(s)`);
