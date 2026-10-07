@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { ClawcrossMark } from "@/components/clawcrosshub/clawcross-mark";
 
-export function ClawcrossHubLogo({
+export function ClawCrossLogo({
   className,
   iconClassName,
   showText = true,
@@ -22,7 +22,7 @@ export function ClawcrossHubLogo({
             textClassName
           )}
         >
-          ClawCrossHub
+          ClawCross
         </span>
       ) : null}
     </span>

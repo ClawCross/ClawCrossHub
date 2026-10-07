@@ -54,7 +54,7 @@ curl -L -o workflow.zip https://clawcross.net/api/workflows/<id>/download
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | [Next.js 15](https://nextjs.org/) (App Router, React 19) |
+| Framework | [Next.js 16](https://nextjs.org/) (App Router, React 19) |
 | Language | TypeScript 5.7 (strict) |
 | UI Components | [shadcn/ui](https://ui.shadcn.com/) (Radix UI + Tailwind CSS) |
 | Icons | [Lucide](https://lucide.dev/) |
@@ -249,3 +249,19 @@ Apache License 2.0
 <p align="center">
   Built with ❤️ for the Clawcross community
 </p>
+
+## Self-hosted groups
+
+`services/groups/` is a standalone Python group server with its own package and data store. It saves and forwards chat; Agents run on participants' devices. No Agent runtime or model API is required for groups.
+
+On this server the Hub is `https://wecli.net/hub` and groups are `https://wecli.net/groups/`. The existing homepage remains available. The site base path is configurable through `NEXT_PUBLIC_BASE_PATH` at build time; API, OAuth and download URLs use the same prefix.
+
+The `deploy/` directory contains systemd units and Caddy routes. The public processes listen on `127.0.0.1:51211` and `127.0.0.1:51310`, sharing Caddy's existing HTTPS 443. The group administrator app listens exclusively on `127.0.0.1:51311`; do not reverse proxy it.
+
+Hub state is kept in `~/.clawcross-hub`; the deployed groups continue using `~/.clawcross-groups`, including the original SQLite database and invitation signing key. Local ClawCross user files are not automatically scanned. Only an explicitly configured catalog is used.
+
+Deployment environment files `.env.production.local` and `.env.groups.local` are private and ignored by Git. GitHub login/publishing requires an OAuth App: fill `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` in `.env.production.local`, register `https://wecli.net/hub/auth/github/callback` as its callback, then rebuild and restart `clawcross-hub`. Browsing, downloads and guest group chat work without OAuth.
+
+### Case compatibility
+
+All six shipped cases use current ClawCross `agent:` references and portable Team manifests with complete personas. They were checked using ClawCross's actual `/teams/snapshot/upload`, `parse_schedule` and resident Agent resolver in an isolated temporary user. The mixed Codex/Claude case imports without starting those clients; running its external members requires explicit acpx and CLI configuration.

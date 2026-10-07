@@ -1,5 +1,7 @@
 "use client";
 
+import { sitePath } from "@/lib/site-url";
+
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Copy, Github } from "lucide-react";
@@ -78,12 +80,12 @@ type IntroCopy = {
 const INTRO_COPY: Record<Locale, IntroCopy> = {
   en: {
     eyebrow: "Local-first AI workspace",
-    title: "Run AI teams locally. Design workflows visually. Share flows through ClawcrossHub.",
+    title: "Run AI teams locally. Design workflows visually. Share flows through ClawCross.",
     body:
-      "Clawcross combines a local OpenAI-compatible API, a web UI, Teams and expert personas, OASIS orchestration, OASIS Town, living GraphRAG memory, ClawCross Creator, and a Claude-Code-style WeBot runtime. ClawcrossHub is the flow distribution platform that helps those reusable flows travel.",
-    bridgeLine: "Discover flows on ClawcrossHub. Run them in Clawcross locally.",
+      "Clawcross combines a local OpenAI-compatible API, a web UI, Teams and expert personas, OASIS orchestration, OASIS Town, living GraphRAG memory, ClawCross Creator, and a Claude-Code-style WeBot runtime. ClawCross is the flow distribution platform that helps those reusable flows travel.",
+    bridgeLine: "Discover flows on ClawCross. Run them in Clawcross locally.",
     hubLabel: "Flow distribution platform for Clawcross",
-    loopBody: "Clawcross is the runtime and operating model. ClawcrossHub is the distribution surface for reusable flows.",
+    loopBody: "Clawcross is the runtime and operating model. ClawCross is the distribution surface for reusable flows.",
     primaryCta: "Explore Workflows",
     secondaryCta: "Get Clawcross",
     videoCta: "Watch Demo",
@@ -104,7 +106,7 @@ const INTRO_COPY: Record<Locale, IntroCopy> = {
       },
       {
         emoji: "📦",
-        title: "ClawcrossHub distribution",
+        title: "ClawCross distribution",
         body: "Browse, publish, and share reusable Clawcross flows as portable workflow artifacts."
       },
       {
@@ -203,7 +205,7 @@ const INTRO_COPY: Record<Locale, IntroCopy> = {
       {
         number: "03",
         title: "Browse, build, and share flows",
-        body: "Discover flows on ClawcrossHub, then import, adapt, or recreate them inside Clawcross."
+        body: "Discover flows on ClawCross, then import, adapt, or recreate them inside Clawcross."
       }
     ],
     audienceEyebrow: "Audience",
@@ -235,18 +237,18 @@ const INTRO_COPY: Record<Locale, IntroCopy> = {
     footerEyebrow: "Call to action",
     footerTitle: "Start on the Hub. Run it locally in Clawcross.",
     footerBody:
-      "ClawcrossHub is where flows are discovered and distributed. Clawcross is where the runtime, teams, orchestration, and memory actually execute.",
-    footerPrimaryCta: "Browse ClawcrossHub",
+      "ClawCross is where flows are discovered and distributed. Clawcross is where the runtime, teams, orchestration, and memory actually execute.",
+    footerPrimaryCta: "Browse ClawCross",
     footerSecondaryCta: "Open Clawcross GitHub"
   },
   zh: {
     eyebrow: "本地优先的 AI 工作空间",
-    title: "在本地运行 AI 团队，可视化设计工作流，并通过 ClawcrossHub 分发分享。",
+    title: "在本地运行 AI 团队，可视化设计工作流，并通过 ClawCross 分发分享。",
     body:
-      "Clawcross 把本地 OpenAI 兼容 API、网页 UI、团队与专家 persona、OASIS 编排、OASIS Town、持续演化的 GraphRAG 记忆、ClawCross Creator，以及类 Claude Code 的 WeBot 运行时放进同一个系统里。ClawcrossHub 则负责这些可复用 flow 的发现、分发与分享。",
-    bridgeLine: "在 ClawcrossHub 发现 flow，在 Clawcross 本地运行它们。",
+      "Clawcross 把本地 OpenAI 兼容 API、网页 UI、团队与专家 persona、OASIS 编排、OASIS Town、持续演化的 GraphRAG 记忆、ClawCross Creator，以及类 Claude Code 的 WeBot 运行时放进同一个系统里。ClawCross 则负责这些可复用 flow 的发现、分发与分享。",
+    bridgeLine: "在 ClawCross 发现 flow，在 Clawcross 本地运行它们。",
     hubLabel: "Clawcross 的 flow 分发平台",
-    loopBody: "Clawcross 是真正执行的运行时与操作模型，ClawcrossHub 则是可复用 flow 的分发与发现表面。",
+    loopBody: "Clawcross 是真正执行的运行时与操作模型，ClawCross 则是可复用 flow 的分发与发现表面。",
     primaryCta: "浏览工作流",
     secondaryCta: "获取 Clawcross",
     videoCta: "观看演示",
@@ -260,7 +262,7 @@ const INTRO_COPY: Record<Locale, IntroCopy> = {
       },
       {
         emoji: "📦",
-        title: "ClawcrossHub 分发层",
+        title: "ClawCross 分发层",
         body: "负责浏览、发布、分享可复用的 Clawcross flow，把工作流做成可携带的资产。"
       },
       {
@@ -359,7 +361,7 @@ const INTRO_COPY: Record<Locale, IntroCopy> = {
       {
         number: "03",
         title: "浏览、构建并分发 flow",
-        body: "先在 ClawcrossHub 发现 flow，再把它们导入、改造或在 Clawcross 里重新生成运行。"
+        body: "先在 ClawCross 发现 flow，再把它们导入、改造或在 Clawcross 里重新生成运行。"
       }
     ],
     audienceEyebrow: "适用人群",
@@ -391,8 +393,8 @@ const INTRO_COPY: Record<Locale, IntroCopy> = {
     footerEyebrow: "行动入口",
     footerTitle: "从 Hub 开始，在 Clawcross 本地运行。",
     footerBody:
-      "ClawcrossHub 负责 flow 的发现与分发，Clawcross 负责真正的运行时、团队、编排与记忆执行。两者是一条完整闭环，不是同一个产品表面。",
-    footerPrimaryCta: "浏览 ClawcrossHub",
+      "ClawCross 负责 flow 的发现与分发，Clawcross 负责真正的运行时、团队、编排与记忆执行。两者是一条完整闭环，不是同一个产品表面。",
+    footerPrimaryCta: "浏览 ClawCross",
     footerSecondaryCta: "打开 Clawcross GitHub"
   }
 };
@@ -523,8 +525,8 @@ export function IntroPage() {
                   <div className="flex items-start gap-4">
                     <div className="intro-logo-badge rounded-3xl border border-primary/15 p-3 shadow-sm">
                       <Image
-                        src="/icon.svg"
-                        alt="ClawcrossHub icon"
+                        src={sitePath("/icon.svg")}
+                        alt="ClawCross icon"
                         width={80}
                         height={80}
                         className="h-14 w-14 sm:h-16 sm:w-16"
@@ -623,7 +625,7 @@ export function IntroPage() {
                   poster={locale === "en" ? "/clawcross/clawcross-demo-poster-en.png" : "/clawcross/clawcross-demo-poster.jpg"}
                   className="intro-demo-video h-full w-full object-contain"
                 >
-                  <source src="/clawcross/clawcross-demo.mp4" type="video/mp4" />
+                  <source src={sitePath("/clawcross/clawcross-demo.mp4")} type="video/mp4" />
                 </video>
               </div>
               <div className="p-6">

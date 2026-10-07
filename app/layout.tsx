@@ -1,24 +1,25 @@
 import type { Metadata } from "next";
 
 import { I18nProvider } from "@/lib/i18n";
+import { sitePath } from "@/lib/site-url";
 
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ClawCrossHub — Workflow Community",
+  title: "ClawCross — Workflow Community",
   description: "Community Workflow Marketplace",
-  metadataBase: new URL("https://clawcross.net"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://wecli.net"),
   alternates: {
     canonical: "/"
   },
   openGraph: {
-    url: "https://clawcross.net",
-    siteName: "ClawCrossHub",
-    title: "ClawCrossHub — Workflow Community",
+    url: process.env.NEXT_PUBLIC_SITE_URL || "https://wecli.net",
+    siteName: "ClawCross",
+    title: "ClawCross — Workflow Community",
     description: "Community Workflow Marketplace"
   },
   icons: {
-    icon: "/icon.svg"
+    icon: sitePath("/icon.svg")
   }
 };
 

@@ -1,0 +1,8 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ClawCross Groups</title><link rel="stylesheet" href="./static/site.css"><script defer src="./static/home.js"></script></head><body>
+<main class="landing"><a id="hub-home" hidden>← 返回 ClawCross</a><a class="brand" href="./">ClawCross <span>Groups</span></a>
+<section class="hero"><span class="eyebrow">一个群，一条链接</span><h1>让大家随时回来聊。</h1><p>输入群名，创建一个独立的聊天室。朋友打开链接就能加入；你电脑上的 ClawCross 也可以连接这里。</p></section>
+<form id="create"><label for="title">群聊名字</label><div class="input-row"><input id="title" maxlength="160" required placeholder="例如：周末计划" autocomplete="off"><button>创建群聊 <span aria-hidden="true">↗</span></button></div></form>
+<p id="status" role="status" aria-live="polite"></p>
+<section id="created" hidden><h2 id="group-title"></h2><p>把这条邀请链接分享给朋友，或粘贴到 ClawCross 的「加入群聊」。</p><textarea id="link" rows="3" readonly aria-label="邀请链接"></textarea><div class="actions"><button id="copy">复制邀请</button><a id="open" class="button secondary">进入群聊</a></div><img id="qr" alt="扫码加入群聊" hidden width="200" height="200"></section>
+<section id="owned" hidden><h2>你创建的群</h2><div id="owned-list"></div></section>
+<footer>这里只保存群聊与转发消息。Agent 在你的设备上运行；设备离线时不会产生 Agent 回复。</footer></main></body></html>

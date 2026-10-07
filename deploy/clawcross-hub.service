@@ -1,0 +1,20 @@
+[Unit]
+Description=ClawCrossHub community website
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/work2/ClawCrossHub
+Environment=NODE_ENV=production
+Environment=NEXT_TELEMETRY_DISABLED=1
+EnvironmentFile=/home/ubuntu/work2/ClawCrossHub/.env.production.local
+ExecStart=/usr/bin/node /home/ubuntu/work2/ClawCrossHub/node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 51211
+Restart=on-failure
+RestartSec=3
+KillMode=control-group
+NoNewPrivileges=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

@@ -54,6 +54,7 @@ const translations: Record<string, Record<Locale, string>> = {
   "header.visitGithub": { en: "Visit our GitHub!", zh: "访问我们的 GitHub!" },
   "header.explore": { en: "Explore", zh: "浏览" },
   "header.intro": { en: "Intro", zh: "介绍" },
+  "header.groups": { en: "Group chat", zh: "群聊" },
   "header.publish": { en: "Publish", zh: "发布" },
   "header.signIn": { en: "Sign in", zh: "登录" },
   "header.signedInAs": { en: "Signed in as", zh: "已登录为" },
@@ -134,7 +135,7 @@ const translations: Record<string, Record<Locale, string>> = {
   "profile.noStarredHint": { en: "Go to the Explore page to discover and star workflows!", zh: "前往浏览页面发现并收藏工作流！" },
   "profile.explore": { en: "Explore page", zh: "浏览页面" },
   "profile.settingsTitle": { en: "⚙️ Profile Settings", zh: "⚙️ 个人设置" },
-"profile.settingsDesc": { en: "Customize your ClawcrossHub profile", zh: "自定义您的 ClawcrossHub 主页" },
+"profile.settingsDesc": { en: "Customize your ClawCross profile", zh: "自定义您的 ClawCross 主页" },
   "profile.displayName": { en: "Display Name", zh: "显示名称" },
   "profile.displayNamePlaceholder": { en: "Your display name", zh: "您的显示名称" },
   "profile.bio": { en: "Bio", zh: "简介" },
@@ -151,7 +152,7 @@ const translations: Record<string, Record<Locale, string>> = {
 
   // ── Profile CRUD Dialogs ──
   "crud.publishNew": { en: "Publish New Workflow", zh: "发布新工作流" },
-"crud.publishNewDesc": { en: "Fill in the details to publish a new workflow to ClawcrossHub.", zh: "填写详细信息以将新工作流发布到 ClawcrossHub。" },
+"crud.publishNewDesc": { en: "Fill in the details to publish a new workflow to ClawCross.", zh: "填写详细信息以将新工作流发布到 ClawCross。" },
   "crud.editWorkflow": { en: "Edit Workflow", zh: "编辑工作流" },
   "crud.editWorkflowDesc": { en: "Update the details of", zh: "更新工作流详情" },
   "crud.deleteWorkflow": { en: "Delete Workflow", zh: "删除工作流" },
@@ -168,7 +169,7 @@ const translations: Record<string, Record<Locale, string>> = {
 
   // ── Settings Dialog ──
   "settings.title": { en: "Settings", zh: "设置" },
-"settings.description": { en: "Customize your ClawcrossHub preferences", zh: "自定义您的 ClawcrossHub 偏好设置" },
+"settings.description": { en: "Customize your ClawCross preferences", zh: "自定义您的 ClawCross 偏好设置" },
   "settings.language": { en: "Language", zh: "语言" },
   "settings.english": { en: "English", zh: "English" },
   "settings.chinese": { en: "中文", zh: "中文" },
@@ -342,7 +343,7 @@ const translations: Record<string, Record<Locale, string>> = {
   "detail.dag": { en: "DAG", zh: "DAG" },
 
   // ── Metadata ──
-"meta.title": { en: "ClawCrossHub — Workflow Community", zh: "ClawCrossHub — 工作流社区" },
+"meta.title": { en: "ClawCross — Workflow Community", zh: "ClawCross — 工作流社区" },
 "meta.description": { en: "Community Workflow Marketplace", zh: "社区工作流市场" },
 };
 

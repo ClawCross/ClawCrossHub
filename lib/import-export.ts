@@ -480,7 +480,7 @@ export function exportWorkflowZip(workflowId: string): { buffer: Buffer; filenam
         ? workflow.oasis_agents
         : extracted.internalAgents
     ).map((agent) => {
-      const { session, ...rest } = agent;
+      const { session, session_id, agent_id, ...rest } = agent;
       return rest;
     });
 
@@ -492,7 +492,7 @@ export function exportWorkflowZip(workflowId: string): { buffer: Buffer; filenam
   let external: Agent[] = [];
   if (Array.isArray(externalRaw)) {
     external = externalRaw.map((agent) => {
-      const { global_name, session, ...rest } = agent as Agent & { global_name?: string };
+      const { global_name, session, session_id, agent_id, ...rest } = agent as Agent & { global_name?: string };
       return rest;
     });
   } else if (externalRaw && typeof externalRaw === "object") {
@@ -518,6 +518,8 @@ export function exportWorkflowZip(workflowId: string): { buffer: Buffer; filenam
   if (Array.isArray(workflow.experts_detail) && workflow.experts_detail.length > 0) {
     // Best source: already-resolved full expert objects
     fullExperts = workflow.experts_detail;
+  } else if (internal.length > 0 && internal.every(agent => typeof agent.persona === "string" && agent.persona.trim())) {
+    fullExperts = internal.map(agent => ({name:agent.name,tag:agent.tag || agent.name,persona:agent.persona || "",temperature:agent.temperature ?? 0.7}));
   } else if (
     Array.isArray(workflow.experts) &&
     workflow.experts.length > 0 &&

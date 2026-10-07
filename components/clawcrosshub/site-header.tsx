@@ -2,14 +2,15 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Github } from "lucide-react";
+import { Github, MessageSquare } from "lucide-react";
 
 import { LanguageToggle } from "@/components/clawcrosshub/language-toggle";
-import { ClawcrossHubLogo } from "@/components/clawcrosshub/logo";
+import { ClawCrossLogo } from "@/components/clawcrosshub/logo";
 import { StableI18nText } from "@/components/clawcrosshub/stable-i18n-text";
 import { ThemeToggle } from "@/components/clawcrosshub/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { GROUPS_URL } from "@/lib/site-url";
 
 type SiteHeaderProps = {
   activePage?: "explore" | "intro";
@@ -27,9 +28,9 @@ function navLinkClass(active: boolean) {
 export function SiteHeader({ activePage, repoLabelKey = "header.clawcross", children }: SiteHeaderProps) {
   return (
     <header className="sticky top-0 z-30 border-b border-border/70 bg-background/90 backdrop-blur">
-      <div className="container flex h-16 items-center gap-3">
+      <div className="container flex min-h-16 flex-wrap items-center gap-3 py-2 sm:h-16 sm:flex-nowrap sm:py-0">
         <Link href="/" className="text-xl font-bold text-primary">
-          <ClawcrossHubLogo />
+          <ClawCrossLogo />
         </Link>
 
         <nav className="hidden md:block">
@@ -50,7 +51,11 @@ export function SiteHeader({ activePage, repoLabelKey = "header.clawcross", chil
           </div>
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex w-full items-center justify-end gap-2 sm:w-auto">
+          <a href={GROUPS_URL} className={cn(buttonVariants({ variant: "outline" }), "gap-2")}>
+            <MessageSquare className="h-4 w-4" aria-hidden="true" />
+            <span className="sr-only sm:not-sr-only"><StableI18nText translationKey="header.groups" /></span>
+          </a>
           <ThemeToggle />
           <LanguageToggle />
 

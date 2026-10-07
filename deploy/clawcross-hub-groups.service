@@ -1,0 +1,18 @@
+[Unit]
+Description=ClawCrossHub independent groups server
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/work2/ClawCrossHub/services/groups
+EnvironmentFile=/home/ubuntu/work2/ClawCrossHub/.env.groups.local
+ExecStart=/home/ubuntu/work2/ClawCrossHub/services/groups/.venv/bin/clawcross-groups
+Restart=on-failure
+RestartSec=3
+KillMode=control-group
+NoNewPrivileges=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
