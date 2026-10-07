@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const response = NextResponse.redirect(new URL(sitePath("/"), SITE_ORIGIN));
+  const response = NextResponse.redirect(new URL(sitePath("/"), process.env.NEXT_PUBLIC_SITE_URL || request.url));
   setGithubUser(response, {
     login: userData.login ?? "unknown",
     name: userData.name ?? userData.login ?? "GitHub User",

@@ -8,12 +8,12 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "ClawCross — Workflow Community",
   description: "Community Workflow Marketplace",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://wecli.net"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://clawcross.net"),
   alternates: {
     canonical: "/"
   },
   openGraph: {
-    url: process.env.NEXT_PUBLIC_SITE_URL || "https://wecli.net",
+    url: process.env.NEXT_PUBLIC_SITE_URL || "https://clawcross.net",
     siteName: "ClawCross",
     title: "ClawCross — Workflow Community",
     description: "Community Workflow Marketplace"
